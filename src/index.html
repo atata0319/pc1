@@ -311,23 +311,31 @@ function loadStorage(key) {
 
 <body>
   <div id="pc">
-    <div style="position: relative; display: inline-block;">
-      <div id="pcpal">
-        <span id="ebcp" class="eight-bit-color-picker"></span>
-      </div>
-      <div>
-        <div id="lineWidth1" style="border: solid 1px black;"><img src="1.png" /></div>
-        <div id="lineWidth3" style=""><img src="3.png" /></div>
-        <div id="lineWidth7" style=""><img src="7.png" /></div>
-        <div id="lineWidth15" style=""><img src="15.png" /></div>
-      </div>
-    </div>
     <div id="pccanvas" style="position: relative; width: 480px; height: 360px; display: inline-block; vertical-align: top; border: solid 1px black; background-image: url('bg.png');">
       <canvas id="layer1" width="480" height="360" style="position: absolute; left: 0px; top: 0px; background-color: transparent;"></canvas>
       <canvas id="layer2" width="480" height="360" style="position: absolute; left: 0px; top: 0px; background-color: transparent;"></canvas>
       <canvas id="layer3" width="480" height="360" style="position: absolute; left: 0px; top: 0px; background-color: transparent;"></canvas>
       <canvas id="layer4" width="480" height="360" style="position: absolute; left: 0px; top: 0px; background-color: transparent;"></canvas>
       <canvas id="layer5" width="480" height="360" style="position: absolute; left: 0px; top: 0px; background-color: transparent;"></canvas>
+    </div>
+    <div style="position: relative; display: inline-block;">
+      <div id="pcpal">
+        <span id="ebcp" class="eight-bit-color-picker"></span>
+      </div>
+      <div style="width: 34px;">
+        <div id="lineWidth1" style="border: solid 1px black;"><img src="1.png" /></div>
+        <div id="lineWidth3" style=""><img src="3.png" /></div>
+        <div id="lineWidth7" style=""><img src="7.png" /></div>
+        <div id="lineWidth15" style=""><img src="15.png" /></div>
+      </div>
+      <div>
+        レイヤー：
+        <div>A<input type="checkbox" checked="checked" /></div>
+        <div>B<input type="checkbox" /></div>
+        <div>C<input type="checkbox" /></div>
+        <div>D<input type="checkbox" /></div>
+        <div>E<input type="checkbox" /></div>
+      </div>
     </div>
   </div>
   <div>
