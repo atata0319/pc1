@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="eight-bit-color-picker.min.css">
+  <script src="eight-bit-color-picker.min.js"></script>
+  <script>
+const CANVAS_BASE_WIDTH = 80;
+const CANVAS_BASE_HEIGHT = 60;
+const LOCALSTORAGE_KEY_SETTINGS = 'settings';
+const LOCALSTORAGE_KEY_STROKES = 'strokes';
+let picker = null;
+let lineWidth = 1;
+let lineCount = 0;
+let prevX = null;
+let prevY = null;
+let strokes;
+let undoBuffer;
+
+class Point {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+  equals(other) {
+    return this.x === other.x && this.y === other.y;
+  }
+}
+
+class StrokeData {
+  constructor(lw, lc, x1, y1, x2, y2) {
+    this.lineWidth = lw;
+    this.lineColor = lc;
+    this.pt1 = new Point(x1, y1);
+    this.pt2 = new Point(x2, y2);
+  }
+}
+
+window.addEventListener('load', () => {
+
+  picker = new EightBitColorPicker({ el: 'ebcp', color: 0 });
+  picker.addEventListener('colorChange', function(e) {
+    //console.log('Old Color: ' + e.detail.oldColor)
+    //console.log('New Color: ' + e.detail.newColor)
+    //console.log('8bit Color: ' + e.detail.picker.get8BitColor())
+    //console.log('Hex Color: ' + e.detail.picker.getHexColor())
+    saveSettings();
+    setTimeout(() => {
+      e.detail.picker.hide();
+    }, 50);
+  });
+
+  document.all.lineWidth1.addEventListener('click', () => {
+    document.all.lineWidth3.style.border = "";
+    document.all.lineWidth7.style.border = "";
+    document.all.lineWidth15.style.border = "";
+    document.all.lineWidth1.style.border = "solid 1px black";
+    lineWidth = 1;
+    saveSettings();
+  });
+
+  document.all.lineWidth3.addEventListener('click', () => {
+    document.all.lineWidth1.style.border = "";
+    document.all.lineWidth7.style.border = "";
+    document.all.lineWidth15.style.border = "";
+    document.all.lineWidth3.style.border = "solid 1px black";
+    lineWidth = 3;
+    saveSettings();
+  });
+
+  document.all.lineWidth7.addEventListener('click', () => {
+    document.all.lineWidth1.style.border = "";
+    document.all.lineWidth3.style.border = "";
+    document.all.lineWidth15.style.border = "";
+    document.all.lineWidth7.style.border = "solid 1px black";
+    lineWidth = 7;
+    saveSettings();
+  });
+
+  document.all.lineWidth15.addEventListener('click', () => {
+    document.all.lineWidth1.style.border = "";
+    document.all.lineWidth3.style.border = "";
+    document.all.lineWidth7.style.border = "";
+    document.all.lineWidth15.style.border = "solid 1px black";
+    lineWidth = 15;
+    saveSettings();
+  });
+
+  document.all.sizel.addEventListener('click', () => {
+    document.all.canvas.width = 640;
+    document.all.canvas.height = 480;
+    redrawCanvas();
+  });
+
+  document.all.sizem.addEventListener('click', () => {
+    document.all.canvas.width = 480;
+    document.all.canvas.height = 360;
+    redrawCanvas();
+  });
+
+  document.all.sizes.addEventListener('click', () => {
+    document.all.canvas.width = 320;
+    document.all.canvas.height = 240;
+    redrawCanvas();
+  });
+
+  document.all.undo.addEventListener('click', () => {
+    undoBuffer.push(new StrokeData(0, null, null, null, null, null));
+    for (let sd = strokes.pop(); sd.lineWidth !== 0; sd = strokes.pop()) {
+      clearCanvas(
+          Math.min(sd.pt1.x, sd.pt2.x) - sd.lineWidth - 1,
+          Math.min(sd.pt1.y, sd.pt2.y) - sd.lineWidth - 1,
+          Math.abs(sd.pt1.x - sd.pt2.x) + (sd.lineWidth + 1) * 2,
+          Math.abs(sd.pt1.y - sd.pt2.y) + (sd.lineWidth + 1) * 2);
+      undoBuffer.push(sd);
+    }
+    redrawCanvas();
+    saveStorage(LOCALSTORAGE_KEY_STROKES, strokes);
+  });
+
+  document.all.redo.addEventListener('click', () => {
+    strokes.push(new StrokeData(0, null, null, null, null, null));
+    for (let sd = undoBuffer.pop(); sd.lineWidth !== 0; sd = undoBuffer.pop()) {
+      clearCanvas(
+          Math.min(sd.pt1.x, sd.pt2.x) - sd.lineWidth - 1,
+          Math.min(sd.pt1.y, sd.pt2.y) - sd.lineWidth - 1,
+          Math.abs(sd.pt1.x - sd.pt2.x) + (sd.lineWidth + 1) * 2,
+          Math.abs(sd.pt1.y - sd.pt2.y) + (sd.lineWidth + 1) * 2);
+      strokes.push(sd);
+    }
+    redrawCanvas();
+    saveStorage(LOCALSTORAGE_KEY_STROKES, strokes);
+  });
+
+  document.all.erase.addEventListener('click', () => {
+    strokes.length = 0;
+    undoBuffer.length = 0;
+    clearCanvas();
+    saveStorage(LOCALSTORAGE_KEY_STROKES, strokes);
+  });
+
+  document.all.canvas.addEventListener('mousedown', (e) => {
+    const rect = e.target.getBoundingClientRect();
+    prevX = e.clientX - rect.left;
+    prevY = e.clientY - rect.top;
+    lineCount = 0;
+    undoBuffer.length = 0;
+    strokes.push(new StrokeData(0, null, null, null, null, null));
+  });
+
+  document.all.canvas.addEventListener('mousemove', (e) => {
+    if (prevX == null || prevY == null) {
+      return;
+    }
+    const rect = e.target.getBoundingClientRect();
+    x = e.clientX - rect.left;
+    y = e.clientY - rect.top;
+    if (prevX === x && prevY === y) {
+      // 同じ地点の場合、何もしない。
+    } else {
+      drawLine(lineWidth, picker.getHexColor(), prevX, prevY, x, y);
+      strokes.push(new StrokeData(lineWidth, picker.getHexColor(), prevX, prevY, x, y));
+      lineCount++;
+    }
+    prevX = x;
+    prevY = y;
+  });
+
+  document.all.canvas.addEventListener('mouseup', (e) => {
+    if (prevX == null || prevY == null) {
+      return;
+    }
+    const rect = e.target.getBoundingClientRect();
+    x = e.clientX - rect.left;
+    y = e.clientY - rect.top;
+    if (prevX === x && prevY === y) {
+      if (lineCount === 0) {
+        drawPoint(lineWidth, picker.getHexColor(), x, y);
+        strokes.push(new StrokeData(lineWidth, picker.getHexColor(), x, y, x, y));
+      }
+    } else {
+      drawLine(lineWidth, picker.getHexColor(), prevX, prevY, x, y);
+      strokes.push(new StrokeData(lineWidth, picker.getHexColor(), prevX, prevY, x, y));
+      lineCount++;
+    }
+    prevX = null;
+    prevY = null;
+    saveStorage(LOCALSTORAGE_KEY_STROKES, strokes);
+  });
+
+  document.all.canvas.addEventListener('mouseleave', (e) => {
+    prevX = null;
+    prevY = null;
+  });
+
+  const settings = loadSettings();
+  if (settings != null) {
+    if (settings.lw != null) {
+      switch (settings.lw) {
+        case 1:
+          document.all.lineWidth1.click();
+          break;
+        case 3:
+          document.all.lineWidth3.click();
+          break;
+        case 7:
+          document.all.lineWidth7.click();
+          break;
+        case 15:
+          document.all.lineWidth15.click();
+          break;
+      }
+    }
+    if (settings.lc != null) {
+      picker.updateColor(settings.lc);
+    }
+  }
+
+  strokes = loadStorage(LOCALSTORAGE_KEY_STROKES);
+  if (strokes) {
+    for (let i = 0; i < strokes.length; i++) {
+      strokes[i].pt1.equals = Point.prototype.equals;
+      strokes[i].pt2.equals = Point.prototype.equals;
+    }
+  } else {
+    strokes = new Array();
+  }
+  undoBuffer = new Array();
+  redrawCanvas();
+
+});
+
+function drawPoint(lw, lc, x, y) {
+  //console.log(lw, lc, x1, y1);
+  const ctx = document.all.canvas.getContext('2d');
+  ctx.fillStyle = lc;
+  ctx.beginPath();
+  ctx.arc(x, y, lw / 2, 0, 2 * Math.PI, false);
+  ctx.fill();
+}
+
+function drawLine(lw, lc, x1, y1, x2, y2) {
+  //console.log(lw, lc, x1, y1, x2, y2);
+  const ctx = document.all.canvas.getContext('2d');
+  ctx.lineWidth = lw;
+  ctx.strokeStyle = lc;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+}
+
+function clearCanvas(x, y, w, h) {
+  const ctx = document.all.canvas.getContext('2d');
+  if (x != null && w != null) {
+    ctx.clearRect(x, y, w, h);
+  } else {
+    ctx.clearRect(0, 0, document.all.canvas.width, document.all.canvas.height);
+  }
+}
+
+function redrawCanvas() {
+  for (let i = 0; i < strokes.length; i++) {
+    if (strokes[i].lineWidth === 0) {
+      continue;
+    }
+    if (strokes[i].pt1.equals(strokes[i].pt2)) {
+      drawPoint(
+          strokes[i].lineWidth,
+          strokes[i].lineColor,
+          strokes[i].pt1.x,
+          strokes[i].pt1.y);
+    } else {
+      drawLine(
+          strokes[i].lineWidth,
+          strokes[i].lineColor,
+          strokes[i].pt1.x,
+          strokes[i].pt1.y,
+          strokes[i].pt2.x,
+          strokes[i].pt2.y);
+    }
+  }
+}
+
+function saveSettings() {
+  saveStorage(LOCALSTORAGE_KEY_SETTINGS, { 'lw': lineWidth, 'lc': picker.get8BitColor() });
+}
+
+function loadSettings() {
+  return loadStorage(LOCALSTORAGE_KEY_SETTINGS);
+}
+
+function saveStorage(key, val) {
+  const str = JSON.stringify(val);
+  // console.log(str);
+  localStorage.setItem(key, str);
+}
+
+function loadStorage(key) {
+  const obj = localStorage.getItem(key);
+  //console.log(obj);
+  return JSON.parse(obj);
+}
+
+  </script>
+</head>
+
+<body>
+  <div id="pb">
+    <div style="display: inline-block;">
+      <div id="pbpal">
+        <span id="ebcp" class="eight-bit-color-picker"></span>
+      </div>
+      <div>
+        <div id="lineWidth1" style="border: solid 1px black;"><img src="1.png" /></div>
+        <div id="lineWidth3" style=""><img src="3.png" /></div>
+        <div id="lineWidth7" style=""><img src="7.png" /></div>
+        <div id="lineWidth15" style=""><img src="15.png" /></div>
+      </div>
+    </div>
+    <canvas id="canvas" width="480" height="360" style="border: solid 1px black;  vertical-align: top;"></canvas>
+  </div>
+  <div>
+    サイズ：<button id="sizel">大</button> <button id="sizem">中</button> <button id="sizes">小</button>&nbsp;&nbsp;&nbsp;&nbsp;<button id="undo">Undo</button> <button id="redo">Redo</button>&nbsp;&nbsp;&nbsp;&nbsp;<button id="erase">全消し</button>
+  </div>
+</body>
+
+</html>
