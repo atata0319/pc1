@@ -10,6 +10,8 @@ const CANVAS_BASE_WIDTH = 80;
 const CANVAS_BASE_HEIGHT = 60;
 const LOCALSTORAGE_KEY_SETTINGS = 'settings';
 const LOCALSTORAGE_KEY_STROKES = 'strokes';
+const LOCALSTORAGE_KEY_SETTINGS2 = 'settings';
+const LOCALSTORAGE_KEY_STROKES2 = 'strokes';
 let picker = null;
 let lineWidth = 1;
 let lineCount = 0;
@@ -88,20 +90,20 @@ window.addEventListener('load', () => {
   });
 
   document.all.sizel.addEventListener('click', () => {
-    document.all.canvas.width = 640;
-    document.all.canvas.height = 480;
+    document.all.pccanvas.style.width = '640px';
+    document.all.pccanvas.style.height = '480px';
     redrawCanvas();
   });
 
   document.all.sizem.addEventListener('click', () => {
-    document.all.canvas.width = 480;
-    document.all.canvas.height = 360;
+    document.all.pccanvas.style.width = '480px';
+    document.all.pccanvas.style.height = '360px';
     redrawCanvas();
   });
 
   document.all.sizes.addEventListener('click', () => {
-    document.all.canvas.width = 320;
-    document.all.canvas.height = 240;
+    document.all.pccanvas.style.width = '320px';
+    document.all.pccanvas.style.height = '240px';
     redrawCanvas();
   });
 
@@ -140,7 +142,7 @@ window.addEventListener('load', () => {
     saveStorage(LOCALSTORAGE_KEY_STROKES, strokes);
   });
 
-  document.all.canvas.addEventListener('mousedown', (e) => {
+  document.all.pccanvas.addEventListener('mousedown', (e) => {
     const rect = e.target.getBoundingClientRect();
     prevX = e.clientX - rect.left;
     prevY = e.clientY - rect.top;
@@ -149,7 +151,7 @@ window.addEventListener('load', () => {
     strokes.push(new StrokeData(0, null, null, null, null, null));
   });
 
-  document.all.canvas.addEventListener('mousemove', (e) => {
+  document.all.pccanvas.addEventListener('mousemove', (e) => {
     if (prevX == null || prevY == null) {
       return;
     }
@@ -167,7 +169,7 @@ window.addEventListener('load', () => {
     prevY = y;
   });
 
-  document.all.canvas.addEventListener('mouseup', (e) => {
+  document.all.pccanvas.addEventListener('mouseup', (e) => {
     if (prevX == null || prevY == null) {
       return;
     }
@@ -189,7 +191,7 @@ window.addEventListener('load', () => {
     saveStorage(LOCALSTORAGE_KEY_STROKES, strokes);
   });
 
-  document.all.canvas.addEventListener('mouseleave', (e) => {
+  document.all.pccanvas.addEventListener('mouseleave', (e) => {
     prevX = null;
     prevY = null;
   });
@@ -233,7 +235,7 @@ window.addEventListener('load', () => {
 
 function drawPoint(lw, lc, x, y) {
   //console.log(lw, lc, x1, y1);
-  const ctx = document.all.canvas.getContext('2d');
+  const ctx = document.all.layer1.getContext('2d');
   ctx.fillStyle = lc;
   ctx.beginPath();
   ctx.arc(x, y, lw / 2, 0, 2 * Math.PI, false);
@@ -242,7 +244,7 @@ function drawPoint(lw, lc, x, y) {
 
 function drawLine(lw, lc, x1, y1, x2, y2) {
   //console.log(lw, lc, x1, y1, x2, y2);
-  const ctx = document.all.canvas.getContext('2d');
+  const ctx = document.all.layer1.getContext('2d');
   ctx.lineWidth = lw;
   ctx.strokeStyle = lc;
   ctx.lineCap = 'round';
@@ -253,11 +255,11 @@ function drawLine(lw, lc, x1, y1, x2, y2) {
 }
 
 function clearCanvas(x, y, w, h) {
-  const ctx = document.all.canvas.getContext('2d');
+  const ctx = document.all.layer1.getContext('2d');
   if (x != null && w != null) {
     ctx.clearRect(x, y, w, h);
   } else {
-    ctx.clearRect(0, 0, document.all.canvas.width, document.all.canvas.height);
+    ctx.clearRect(0, 0, document.all.layer1.width, document.all.layer1.height);
   }
 }
 
@@ -308,9 +310,9 @@ function loadStorage(key) {
 </head>
 
 <body>
-  <div id="pb">
-    <div style="display: inline-block;">
-      <div id="pbpal">
+  <div id="pc">
+    <div style="position: relative; display: inline-block;">
+      <div id="pcpal">
         <span id="ebcp" class="eight-bit-color-picker"></span>
       </div>
       <div>
@@ -320,7 +322,13 @@ function loadStorage(key) {
         <div id="lineWidth15" style=""><img src="15.png" /></div>
       </div>
     </div>
-    <canvas id="canvas" width="480" height="360" style="border: solid 1px black;  vertical-align: top;"></canvas>
+    <div id="pccanvas" style="position: relative; width: 480px; height: 360px; display: inline-block; vertical-align: top; border: solid 1px black; background-image: url('bg.png');">
+      <canvas id="layer1" width="480" height="360" style="position: absolute; left: 0px; top: 0px; background-color: transparent;"></canvas>
+      <canvas id="layer2" width="480" height="360" style="position: absolute; left: 0px; top: 0px; background-color: transparent;"></canvas>
+      <canvas id="layer3" width="480" height="360" style="position: absolute; left: 0px; top: 0px; background-color: transparent;"></canvas>
+      <canvas id="layer4" width="480" height="360" style="position: absolute; left: 0px; top: 0px; background-color: transparent;"></canvas>
+      <canvas id="layer5" width="480" height="360" style="position: absolute; left: 0px; top: 0px; background-color: transparent;"></canvas>
+    </div>
   </div>
   <div>
     サイズ：<button id="sizel">大</button> <button id="sizem">中</button> <button id="sizes">小</button>&nbsp;&nbsp;&nbsp;&nbsp;<button id="undo">Undo</button> <button id="redo">Redo</button>&nbsp;&nbsp;&nbsp;&nbsp;<button id="erase">全消し</button>
