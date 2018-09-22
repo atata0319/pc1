@@ -6,15 +6,16 @@
   <link rel="stylesheet" href="eight-bit-color-picker.min.css">
   <script src="eight-bit-color-picker.min.js"></script>
   <script>
-const CANVAS_BASE_WIDTH = 80;
-const CANVAS_BASE_HEIGHT = 60;
-const LOCALSTORAGE_KEY_SETTINGS = 'settings';
-const LOCALSTORAGE_KEY_STROKES = 'strokes';
-const LOCALSTORAGE_KEY_SETTINGS2 = 'settings';
-const LOCALSTORAGE_KEY_STROKES2 = 'strokes';
+const LOCALSTORAGE_KEY_SETTINGS = 'settings2';
+const LOCALSTORAGE_KEY_STROKES = 'strokes2';
+const LOCALSTORAGE_KEY_SETTINGS_OLD = 'settings';
+const LOCALSTORAGE_KEY_STROKES_OLD = 'strokes';
+const layers = new Array();
 let picker = null;
 let lineWidth = 1;
 let lineCount = 0;
+let layerId = 1;
+let targetLater = null;
 let prevX = null;
 let prevY = null;
 let strokes;
@@ -31,7 +32,8 @@ class Point {
 }
 
 class StrokeData {
-  constructor(lw, lc, x1, y1, x2, y2) {
+  constructor(tl, lw, lc, x1, y1, x2, y2) {
+    this.targetLater = tl.layerid;
     this.lineWidth = lw;
     this.lineColor = lc;
     this.pt1 = new Point(x1, y1);
@@ -89,21 +91,41 @@ window.addEventListener('load', () => {
     saveSettings();
   });
 
+  document.all.pclyrs_add.addEventListener('click', () => {
+    const layer = document.createElement('canvas');
+    layer.id = 'pclyr' + layerId;
+<!--      <canvas id="layer1" width="480" height="360" style="position: absolute; left: 0px; top: 0px; background-color: transparent; z-index:3;"></canvas>-->
+    pclyrs.appendChild(layer);
+    const row = document.all.pclyrs_mng.insertRow(1);
+    const cellLayer = row.insertCell(-1);
+    cellLayer.innerHTML = '<input id="pclyr' + layerId + 's" type="radio" name="pclyrs_s" /><label for="pclyr' + layerId + 's">' + layerId.toString() + "</label>";
+    const cellVisibility = row.insertCell(-1);
+    cellVisibility.align = 'center';
+    cellVisibility.innerHTML = '<input type="checkbox" id="pclyr' + layerId + 'v" checked="checked" />';
+    const cellUp = row.insertCell(-1);
+    cellUp.innerHTML = '<button>↑</button>';
+    const cellDown = row.insertCell(-1);
+    cellDown.innerHTML = '<button>↓</button>';
+    const cellTransparency = row.insertCell(-1);
+    cellTransparency.innerHTML = '<input type="number" id="pclyr' + layerId + 'o" min="0" max="100" value="0" />';
+    layerId++;
+  });
+
   document.all.sizel.addEventListener('click', () => {
-    document.all.pccanvas.style.width = '640px';
-    document.all.pccanvas.style.height = '480px';
+    document.all.pclyrs.style.width = '640px';
+    document.all.pclyrs.style.height = '480px';
     redrawCanvas();
   });
 
   document.all.sizem.addEventListener('click', () => {
-    document.all.pccanvas.style.width = '480px';
-    document.all.pccanvas.style.height = '360px';
+    document.all.pclyrs.style.width = '480px';
+    document.all.pclyrs.style.height = '360px';
     redrawCanvas();
   });
 
   document.all.sizes.addEventListener('click', () => {
-    document.all.pccanvas.style.width = '320px';
-    document.all.pccanvas.style.height = '240px';
+    document.all.pclyrs.style.width = '320px';
+    document.all.pclyrs.style.height = '240px';
     redrawCanvas();
   });
 
@@ -142,7 +164,7 @@ window.addEventListener('load', () => {
     saveStorage(LOCALSTORAGE_KEY_STROKES, strokes);
   });
 
-  document.all.pccanvas.addEventListener('mousedown', (e) => {
+  document.all.pclyrs.addEventListener('mousedown', (e) => {
     const rect = e.target.getBoundingClientRect();
     prevX = e.clientX - rect.left;
     prevY = e.clientY - rect.top;
@@ -151,7 +173,7 @@ window.addEventListener('load', () => {
     strokes.push(new StrokeData(0, null, null, null, null, null));
   });
 
-  document.all.pccanvas.addEventListener('mousemove', (e) => {
+  document.all.pclyrs.addEventListener('mousemove', (e) => {
     if (prevX == null || prevY == null) {
       return;
     }
@@ -169,7 +191,7 @@ window.addEventListener('load', () => {
     prevY = y;
   });
 
-  document.all.pccanvas.addEventListener('mouseup', (e) => {
+  document.all.pclyrs.addEventListener('mouseup', (e) => {
     if (prevX == null || prevY == null) {
       return;
     }
@@ -191,7 +213,7 @@ window.addEventListener('load', () => {
     saveStorage(LOCALSTORAGE_KEY_STROKES, strokes);
   });
 
-  document.all.pccanvas.addEventListener('mouseleave', (e) => {
+  document.all.pclyrs.addEventListener('mouseleave', (e) => {
     prevX = null;
     prevY = null;
   });
@@ -219,6 +241,9 @@ window.addEventListener('load', () => {
     }
   }
 
+  localStorage.removeItem(LOCALSTORAGE_KEY_SETTINGS_OLD);
+  localStorage.removeItem(LOCALSTORAGE_KEY_STROKES_OLD);
+/*
   strokes = loadStorage(LOCALSTORAGE_KEY_STROKES);
   if (strokes) {
     for (let i = 0; i < strokes.length; i++) {
@@ -230,6 +255,10 @@ window.addEventListener('load', () => {
   }
   undoBuffer = new Array();
   redrawCanvas();
+*/
+  if (layers.length === 0) {
+    document.all.pclyrs_add.click();
+  }
 
 });
 
@@ -311,31 +340,30 @@ function loadStorage(key) {
 
 <body>
   <div id="pc">
-    <div id="pccanvas" style="position: relative; width: 480px; height: 360px; display: inline-block; vertical-align: top; border: solid 1px black; background-image: url('bg.png');">
-      <canvas id="layer1" width="480" height="360" style="position: absolute; left: 0px; top: 0px; background-color: transparent;"></canvas>
-      <canvas id="layer2" width="480" height="360" style="position: absolute; left: 0px; top: 0px; background-color: transparent;"></canvas>
-      <canvas id="layer3" width="480" height="360" style="position: absolute; left: 0px; top: 0px; background-color: transparent;"></canvas>
-      <canvas id="layer4" width="480" height="360" style="position: absolute; left: 0px; top: 0px; background-color: transparent;"></canvas>
-      <canvas id="layer5" width="480" height="360" style="position: absolute; left: 0px; top: 0px; background-color: transparent;"></canvas>
+    <div id="pclyrs" style="position: relative; width: 480px; height: 360px; display: inline-block; vertical-align: top; border: solid 1px black; background-image: url('bg.png');">
     </div>
     <div style="position: relative; display: inline-block;">
       <div id="pcpal">
         <span id="ebcp" class="eight-bit-color-picker"></span>
       </div>
+      <br />
       <div style="width: 34px;">
         <div id="lineWidth1" style="border: solid 1px black;"><img src="1.png" /></div>
         <div id="lineWidth3" style=""><img src="3.png" /></div>
         <div id="lineWidth7" style=""><img src="7.png" /></div>
         <div id="lineWidth15" style=""><img src="15.png" /></div>
       </div>
-      <div>
-        レイヤー：
-        <div>A<input type="checkbox" checked="checked" /></div>
-        <div>B<input type="checkbox" /></div>
-        <div>C<input type="checkbox" /></div>
-        <div>D<input type="checkbox" /></div>
-        <div>E<input type="checkbox" /></div>
-      </div>
+      <br />
+      <table id="pclyrs_mng" border="1">
+        <tr>
+          <th align="center">レイヤー</th>
+          <th align="center">表示</th>
+          <th colspan="2" align="center">移動</th>
+          <th align="center">透明度</th>
+        </tr>
+      </table>
+      <button id="pclyrs_add">追加</button>
+      <button id="pclyrs_remove">削除</button>
     </div>
   </div>
   <div>
