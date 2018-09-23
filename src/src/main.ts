@@ -34,13 +34,27 @@ class Point {
   public x: number;
   public y: number;
 
-  public constructor(x, y) {
+  public constructor(x: number, y: number) {
       this.x = x;
       this.y = y;
   }
 
   public equals(other: Point): boolean {
       return this.x === other.x && this.y === other.y;
+  }
+}
+
+class Size {
+  public width: number;
+  public height: number;
+
+  public constructor(width: number, height: number) {
+      this.width = width;
+      this.height = height;
+  }
+
+  public equals(other: Size): boolean {
+      return this.width === other.width && this.height === other.height;
   }
 }
 
@@ -52,7 +66,7 @@ class StrokeData {
   public pt2: Point;
 
   constructor(tl: HTMLCanvasElement, lw: number, lc: string, x1: number, y1: number, x2: number, y2: number) {
-    this.targetLayerId = parseInt(tl.id.substring(LAYERID_PREFIX.length));
+    this.targetLayerId = tl != null ? parseInt(tl.id.substring(LAYERID_PREFIX.length)) : null;
     this.lineWidth = lw;
     this.lineColor = lc;
     this.pt1 = new Point(x1, y1);
@@ -72,14 +86,14 @@ const LOCALSTORAGE_KEY_STROKES_OLD = 'strokes';
 const LAYERID_PREFIX = 'pclyr';
 const layers = new Array<HTMLCanvasElement>();
 let picker: EightBitColorPicker = null;
-let lineWidth = 1;
-let lineCount = 0;
-let layerId = 1;
+let lineWidth: number = 1;
+let lineCount: number = 0;
+let layerId: number = 1;
 let targetLayer: HTMLCanvasElement = null;
-let prevX = null;
-let prevY = null;
-let strokes: Array<StrokeData>;
-let undoBuffer: Array<StrokeData>;
+let prevX: number = null;
+let prevY: number = null;
+let strokes = new Array<StrokeData>();
+let undoBuffer = new Array<StrokeData>();
 
 $(function(){
 
@@ -133,39 +147,59 @@ $(function(){
 
   $('#pclyrs_add').on('click', () => {
     const layer = document.createElement('canvas');
-    layer.id = 'pclyr' + layerId;
-    // <!--      <canvas id="layer1" width="480" height="360" style="position: absolute; left: 0px; top: 0px; background-color: transparent; z-index:3;"></canvas>-->
+    layer.id = LAYERID_PREFIX + layerId;
+    const sz = getLayerSize();
+    layer.width = sz.width;
+    layer.height = sz.height;
+    layer.style.position = 'absolute';
+    layer.style.left = '0px';
+    layer.style.top = '0px';
+    layer.style.zIndex = layerId.toString();
     $('#pclyrs').append(layer);
-    const row = $('#pclyrs_mng').insertRow(1);
-    const cellLayer = row.insertCell(-1);
-    cellLayer.innerHTML = '<input id="' + LAYERID_PREFIX + layerId + 's" type="radio" name="pclyrs_s" /><label for="' + LAYERID_PREFIX + layerId + 's">' + layerId.toString() + "</label>";
-    const cellVisibility = row.insertCell(-1);
-    cellVisibility.align = 'center';
-    cellVisibility.innerHTML = '<input type="checkbox" id="' + LAYERID_PREFIX + layerId + 'v" checked="checked" />';
-    const cellUp = row.insertCell(-1);
-    cellUp.innerHTML = '<button>↑</button>';
-    const cellDown = row.insertCell(-1);
-    cellDown.innerHTML = '<button>↓</button>';
-    const cellTransparency = row.insertCell(-1);
-    cellTransparency.innerHTML = '<input type="number" id="' + LAYERID_PREFIX + layerId + 'o" min="0" max="100" value="0" />';
+    layers.push(layer);
+    const row = $('tbody tr:first').after(
+      `<tr>
+      <td><input id="${LAYERID_PREFIX + layerId}s" type="radio" name="pclyrs_s" value="${LAYERID_PREFIX + layerId}" /><label for="${LAYERID_PREFIX + layerId}s">${layerId}</label></td>
+      <td align="center"><input type="checkbox" id="${LAYERID_PREFIX + layerId}v" checked="checked" /></td>
+      <td><button>↑</button></td>
+      <td><button>↓</button></td>
+      <td><input type="number" id="${LAYERID_PREFIX + layerId}o" min="0" max="100" value="0" /></td>
+      </tr>`);
+    $('#' + LAYERID_PREFIX + layerId + 'v').on('change', (e: $.Event) => {
+      const layerId = parseInt(e.target.id.substring(LAYERID_PREFIX.length));
+      if (e.target.checked) {
+        getLayerFromId(layerId).style.visibility = 'visible';
+      } else {
+        getLayerFromId(layerId).style.visibility = 'hidden';
+      }
+    });
+    $('#' + LAYERID_PREFIX + layerId + 'o').on('change', (e: $.Event) => {
+      const layerId = parseInt(e.target.id.substring(LAYERID_PREFIX.length));
+      if (e.target.value < 0)
+        getLayerFromId(layerId).style.opacity = '1';
+      else if (e.target.value < 100)
+        getLayerFromId(layerId).style.opacity = ((100 - e.target.value) / 100).toString();
+      else
+        getLayerFromId(layerId).style.opacity = '0';
+    });
     layerId++;
   });
 
   $('#sizel').on('click', () => {
-    $('#pclyrs').style.width = '640px';
-    $('#pclyrs').style.height = '480px';
+    $('#pclyrs').css('width', '640px');
+    $('#pclyrs').css('height', '480px');
     redrawCanvas();
   });
 
   $('#sizem').on('click', () => {
-    $('#pclyrs').style.width = '480px';
-    $('#pclyrs').style.height = '360px';
+    $('#pclyrs').css('width', '480px');
+    $('#pclyrs').css('height', '360px');
     redrawCanvas();
   });
 
   $('#sizes').on('click', () => {
-    $('#pclyrs').style.width = '320px';
-    $('#pclyrs').style.height = '240px';
+    $('#pclyrs').css('width', '320px');
+    $('#pclyrs').css('height', '240px');
     redrawCanvas();
   });
 
@@ -262,6 +296,7 @@ $(function(){
   });
 
   $('#pclyrs').on('mouseleave', (e) => {
+    targetLayer = null;
     prevX = null;
     prevY = null;
   });
@@ -305,17 +340,23 @@ $(function(){
   redrawCanvas();
 */
   if (layers.length === 0) {
+    layerId = 1;
     $('#pclyrs_add').click();
+    $('#' + LAYERID_PREFIX + 1 + 's').prop('checked', true);
   }
 
 });
 
 function getSelectedLayer(): HTMLCanvasElement {
-  return null;
+  return $('#' + $('input[name=pclyrs_s]:checked').val()).get(0);
 }
 
 function getLayerFromId(layerId: number): HTMLCanvasElement {
-  return $('#' + LAYERID_PREFIX + layerId);
+  return $('#' + LAYERID_PREFIX + layerId).get(0);
+}
+
+function getLayerSize(): Size {
+  return new Size(parseInt($('#pclyrs').css('width')), parseInt($('#pclyrs').css('height')));
 }
 
 function drawPoint(targetLayer: HTMLCanvasElement, lw: number, lc: string, x: number, y: number) {
@@ -349,7 +390,9 @@ function clearCanvas(targetLayer: HTMLCanvasElement, x: number, y: number, w: nu
 }
 
 function clearAllCanvas() {
-
+  for (const layer of layers) {
+    clearCanvas(layer, null, null, null, null);
+  }
 }
 
 function redrawCanvas() {
