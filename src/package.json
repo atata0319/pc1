@@ -1,0 +1,45 @@
+{
+  "name": "pc1",
+  "version": "1.0.0",
+  "description": "paint chat 1",
+  "scripts": {
+    "clean": "RMDIR /S /Q dist",
+    "prebuild": "npm run clean && mkdir dist && mkdir dist\\css && mkdir dist\\js && mkdir dist\\assets",
+    "build:css": "cpx ./src/**/*.css dist",
+    "build:assets": "cpx ./src/assets/* dist/assets",
+    "build:html": "cpx ./src/**/*.html dist",
+    "build:ts": "browserify ./src/main.ts -p [tsify] > dist/js/bundle.js",
+    "build:js": "cpx src\\**\\*.js dist",
+    "build": "npm run prebuild && npm run build:css && npm run build:assets && npm run build:html && npm run build:ts && npm run build:js",
+    "watch:css": "cpx ./src/**/*.css dist --watch",
+    "watch:assets": "cpx ./src/assets/* dist/assets --watch",
+    "watch:html": "cpx ./src/**/*.html dist --watch",
+    "watch:ts": "watchify ./src/main.ts -p [tsify] -v --debug -o dist/js/bundle.js",
+    "watch:js": "cpx ./src/**/*.js dist --watch",
+    "watch": "npm-run-all --parallel watch:*",
+    "serve": "http-server dist/ -p 8000",
+    "dev": "npm-run-all --parallel serve watch"
+  },
+  "keywords": [],
+  "author": "atata0319",
+  "license": "MIT",
+  "devDependencies": {
+    "browserify": "^16.2.2",
+    "cat": "^0.2.0",
+    "catw": "^1.0.1",
+    "cpx": "^1.5.0",
+    "http-server": "^0.11.1",
+    "npm-run-all": "^4.1.3",
+    "ts-node": "^7.0.1",
+    "tsify": "^4.0.0",
+    "typescript": "^3.0.3",
+    "watchify": "^3.11.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/atata0319/pc1"
+  },
+  "dependencies": {
+    "jquery": "^3.3.1"
+  }
+}

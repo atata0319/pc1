@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>paint chat 1</title>
+  <link rel="stylesheet" href="css/eight-bit-color-picker.min.css">
+  <script src="js/eight-bit-color-picker.min.js"></script>
+</head>
+
+<body>
+  <div id="pc">
+    <div id="pclyrs" style="position: relative; width: 480px; height: 360px; display: inline-block; vertical-align: top; border: solid 1px black; background-image: url('assets/bg.png');">
+    </div>
+    <div style="position: relative; display: inline-block;">
+      <div id="pcpal">
+        <span id="ebcp" class="eight-bit-color-picker"></span>
+      </div>
+      <br />
+      <div style="width: 34px;">
+        <div id="lineWidth1" style="border: solid 1px black;"><img src="assets/1.png" /></div>
+        <div id="lineWidth3" style=""><img src="assets/3.png" /></div>
+        <div id="lineWidth7" style=""><img src="assets/7.png" /></div>
+        <div id="lineWidth15" style=""><img src="assets/15.png" /></div>
+      </div>
+      <br />
+      <table id="pclyrs_mng" border="1">
+        <tr>
+          <th align="center">レイヤー</th>
+          <th align="center">表示</th>
+          <th colspan="2" align="center">移動</th>
+          <th align="center">透明度</th>
+        </tr>
+      </table>
+      <button id="pclyrs_add">追加</button>
+      <button id="pclyrs_remove">削除</button>
+    </div>
+  </div>
+  <div>
+    サイズ：<button id="sizel">大</button> <button id="sizem">中</button> <button id="sizes">小</button>&nbsp;&nbsp;&nbsp;&nbsp;<button id="undo">Undo</button> <button id="redo">Redo</button>&nbsp;&nbsp;&nbsp;&nbsp;<button id="erase">全消し</button>
+  </div>
+  <script src="js/bundle.js"></script>
+</body>
+
+</html>
