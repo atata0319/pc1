@@ -163,11 +163,11 @@ $(function(){
     layers.push(layer);
     const row = $('tbody tr:first').after(
       `<tr>
-      <td><input id="${LAYERID_PREFIX + layerId}s" type="radio" name="pclyrs_s" value="${LAYERID_PREFIX + layerId}" /><label for="${LAYERID_PREFIX + layerId}s">${layerId}</label></td>
-      <td align="center"><input type="checkbox" id="${LAYERID_PREFIX + layerId}v" checked="checked" /></td>
-      <td><button>↑</button></td>
-      <td><button>↓</button></td>
-      <td><input type="number" id="${LAYERID_PREFIX + layerId}o" min="0" max="100" value="0" /></td>
+      <td style="border: solid 1px black;"><input id="${LAYERID_PREFIX + layerId}s" type="radio" name="pclyrs_s" value="${LAYERID_PREFIX + layerId}" /><label for="${LAYERID_PREFIX + layerId}s">${layerId}</label></td>
+      <td style="text-align: center; border: solid 1px black;"><input type="checkbox" id="${LAYERID_PREFIX + layerId}v" checked="checked" /></td>
+      <td style="text-align: center; border: solid 1px black;"><button>↑</button></td>
+      <td style="text-align: center; border: solid 1px black;"><button>↓</button></td>
+      <td style="border: solid 1px black;"><input type="number" id="${LAYERID_PREFIX + layerId}o" min="0" max="100" value="0" /></td>
       </tr>`);
     $('#' + LAYERID_PREFIX + layerId + 'v').on('change', (e: $.Event) => {
       const layerId = parseInt(e.target.id.substring(LAYERID_PREFIX.length));
