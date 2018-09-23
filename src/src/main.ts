@@ -109,6 +109,10 @@ $(function(){
     }, 50);
   });
 
+  document.onselectstart = function () {
+    return false;
+  };
+
   $('#lineWidth1').on('click', () => {
     $('#lineWidth3').css('border', '');
     $('#lineWidth7').css('border', '');
@@ -188,18 +192,30 @@ $(function(){
   $('#sizel').on('click', () => {
     $('#pclyrs').css('width', '640px');
     $('#pclyrs').css('height', '480px');
+    for (const layer of layers) {
+      layer.width = 640;
+      layer.height = 480;
+    }
     redrawCanvas();
   });
 
   $('#sizem').on('click', () => {
     $('#pclyrs').css('width', '480px');
     $('#pclyrs').css('height', '360px');
+    for (const layer of layers) {
+      layer.width = 480;
+      layer.height = 360;
+    }
     redrawCanvas();
   });
 
   $('#sizes').on('click', () => {
     $('#pclyrs').css('width', '320px');
     $('#pclyrs').css('height', '240px');
+    for (const layer of layers) {
+      layer.width = 320;
+      layer.height = 240;
+    }
     redrawCanvas();
   });
 
