@@ -1,5 +1,7 @@
 import $ = require('jquery');
-//import {EightBitColorPicker, EightBitColorPickerEvent} from 'eight-bit-color-picker';
+import {Point} from './point';
+import {Size} from './size';
+import {Rectangle} from './rectangle';
 
 declare class EightBitColorPickerOptions {
   el: string;
@@ -28,34 +30,6 @@ declare class EightBitColorPickerEventDetail {
 
 declare class EightBitColorPickerEvent extends Event {
   detail: EightBitColorPickerEventDetail;
-}
-
-class Point {
-  public x: number;
-  public y: number;
-
-  public constructor(x: number, y: number) {
-      this.x = x;
-      this.y = y;
-  }
-
-  public equals(other: Point): boolean {
-      return this.x === other.x && this.y === other.y;
-  }
-}
-
-class Size {
-  public width: number;
-  public height: number;
-
-  public constructor(width: number, height: number) {
-      this.width = width;
-      this.height = height;
-  }
-
-  public equals(other: Size): boolean {
-      return this.width === other.width && this.height === other.height;
-  }
 }
 
 class StrokeData {
@@ -256,27 +230,27 @@ $(function(){
     saveStorage(LOCALSTORAGE_KEY_STROKES, strokes);
   });
 
-  $('#pclyrs').on('mousedown', (e) => {
-    const rect = e.target.getBoundingClientRect();
+  $('#pclyrs').on('mousedown', (e: MouseEvent) => {
+    // console.log('mousedown', e);
     targetLayer = getSelectedLayer();
     if (targetLayer == null) {
       alert('描画対象のレイヤーが選択されていません。');
       return;
     }
-    prevX = e.clientX - rect.left;
-    prevY = e.clientY - rect.top;
+    prevX = e.offsetX;
+    prevY = e.offsetY;
     lineCount = 0;
     undoBuffer.length = 0;
     strokes.push(new StrokeData(null, 0, null, null, null, null, null));
   });
 
-  $('#pclyrs').on('mousemove', (e) => {
+  $('#pclyrs').on('mousemove', (e: MouseEvent) => {
     if (targetLayer == null) {
       return;
     }
-    const rect = e.target.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // console.log('mousemove', e);
+    const x = e.offsetX;
+    const y = e.offsetY;
     if (prevX === x && prevY === y) {
       // 同じ地点の場合、何もしない。
     } else {
@@ -288,13 +262,13 @@ $(function(){
     prevY = y;
   });
 
-  $('#pclyrs').on('mouseup', (e) => {
+  $('#pclyrs').on('mouseup', (e: MouseEvent) => {
+    // console.log('mouseup', e);
     if (targetLayer == null) {
       return;
     }
-    const rect = e.target.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = e.offsetX;
+    const y = e.offsetY
     if (prevX === x && prevY === y) {
       if (lineCount === 0) {
         drawPoint(targetLayer, lineWidth, picker.getHexColor(), x, y);
@@ -311,10 +285,20 @@ $(function(){
     saveStorage(LOCALSTORAGE_KEY_STROKES, strokes);
   });
 
-  $('#pclyrs').on('mouseleave', (e) => {
-    targetLayer = null;
-    prevX = null;
-    prevY = null;
+  $('#pclyrs').on('touchstart', (e: PointerEvent) => {
+    // console.log('touchstart', e);
+  });
+
+  $('#pclyrs').on('touchmove', (e: PointerEvent) => {
+    // console.log('touchmove', e);
+  });
+
+  $('#pclyrs').on('touchend', (e: PointerEvent) => {
+    // console.log('touchend', e);
+  });
+
+  $('#pclyrs').on('touchcancel', (e: PointerEvent) => {
+    // console.log('touchcancel', e);
   });
 
   const settings = loadSettings();
