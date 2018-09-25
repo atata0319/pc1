@@ -286,15 +286,18 @@ $(function(){
   });
 
   $('#pclyrs').on('touchstart', (e: PointerEvent) => {
-    // console.log('touchstart', e);
+    e.preventDefault();
+    console.log('touchstart', e);
   });
 
   $('#pclyrs').on('touchmove', (e: PointerEvent) => {
-    // console.log('touchmove', e);
+    e.preventDefault();
+    console.log('touchmove', e);
   });
 
   $('#pclyrs').on('touchend', (e: PointerEvent) => {
-    // console.log('touchend', e);
+    e.preventDefault();
+    console.log('touchend', e);
   });
 
   $('#pclyrs').on('touchcancel', (e: PointerEvent) => {
@@ -346,6 +349,10 @@ $(function(){
   }
 
 });
+
+function startDrawing(x: number, y: number): void {
+
+}
 
 function getSelectedLayer(): HTMLCanvasElement {
   return $('#' + $('input[name=pclyrs_s]:checked').val()).get(0);
