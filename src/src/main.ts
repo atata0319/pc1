@@ -232,75 +232,38 @@ $(function(){
 
   $('#pclyrs').on('mousedown', (e: MouseEvent) => {
     // console.log('mousedown', e);
-    targetLayer = getSelectedLayer();
-    if (targetLayer == null) {
-      alert('描画対象のレイヤーが選択されていません。');
-      return;
-    }
-    prevX = e.offsetX;
-    prevY = e.offsetY;
-    lineCount = 0;
-    undoBuffer.length = 0;
-    strokes.push(new StrokeData(null, 0, null, null, null, null, null));
+    startPainting(e.offsetX, e.offsetY);
   });
 
   $('#pclyrs').on('mousemove', (e: MouseEvent) => {
-    if (targetLayer == null) {
-      return;
-    }
     // console.log('mousemove', e);
-    const x = e.offsetX;
-    const y = e.offsetY;
-    if (prevX === x && prevY === y) {
-      // 同じ地点の場合、何もしない。
-    } else {
-      drawLine(targetLayer, lineWidth, picker.getHexColor(), prevX, prevY, x, y);
-      strokes.push(new StrokeData(targetLayer, lineWidth, picker.getHexColor(), prevX, prevY, x, y));
-      lineCount++;
-    }
-    prevX = x;
-    prevY = y;
+    continuePainting(e.offsetX, e.offsetY);
   });
 
   $('#pclyrs').on('mouseup', (e: MouseEvent) => {
     // console.log('mouseup', e);
-    if (targetLayer == null) {
-      return;
-    }
-    const x = e.offsetX;
-    const y = e.offsetY
-    if (prevX === x && prevY === y) {
-      if (lineCount === 0) {
-        drawPoint(targetLayer, lineWidth, picker.getHexColor(), x, y);
-        strokes.push(new StrokeData(targetLayer, lineWidth, picker.getHexColor(), x, y, x, y));
-      }
-    } else {
-      drawLine(targetLayer, lineWidth, picker.getHexColor(), prevX, prevY, x, y);
-      strokes.push(new StrokeData(targetLayer, lineWidth, picker.getHexColor(), prevX, prevY, x, y));
-      lineCount++;
-    }
-    targetLayer = null;
-    prevX = null;
-    prevY = null;
-    saveStorage(LOCALSTORAGE_KEY_STROKES, strokes);
+    endPainting(e.offsetX, e.offsetY);
   });
 
-  $('#pclyrs').on('touchstart', (e: PointerEvent) => {
+  $('#pclyrs').on('touchstart', (e: any) => {
     e.preventDefault();
-    console.log('touchstart', e);
+    // console.log('touchstart', e);
+    startPainting(e.targetTouches[0].clientX, e.targetTouches[0].clientY);
   });
 
-  $('#pclyrs').on('touchmove', (e: PointerEvent) => {
+  $('#pclyrs').on('touchmove', (e: any) => {
     e.preventDefault();
-    console.log('touchmove', e);
+    // console.log('touchmove', e);
+    continuePainting(e.targetTouches[0].clientX, e.targetTouches[0].clientY);
   });
 
-  $('#pclyrs').on('touchend', (e: PointerEvent) => {
+  $('#pclyrs').on('touchend', (e: any) => {
     e.preventDefault();
-    console.log('touchend', e);
+    // console.log('touchend', e);
+    endPainting();
   });
 
-  $('#pclyrs').on('touchcancel', (e: PointerEvent) => {
+  $('#pclyrs').on('touchcancel', (e: any) => {
     // console.log('touchcancel', e);
   });
 
@@ -345,13 +308,61 @@ $(function(){
   if (layers.length === 0) {
     layerId = 1;
     $('#pclyrs_add').click();
-    $('#' + LAYERID_PREFIX + 1 + 's').prop('checked', true);
+    setTimeout(() => {
+      $('#' + LAYERID_PREFIX + 1 + 's').prop('checked', true);
+    }, 0);
   }
 
 });
 
-function startDrawing(x: number, y: number): void {
+function startPainting(x: number, y: number): void {
+  targetLayer = getSelectedLayer();
+  if (targetLayer == null) {
+    alert('描画対象のレイヤーが選択されていません。');
+    return;
+  }
+  prevX = x;
+  prevY = y;
+  lineCount = 0;
+  undoBuffer.length = 0;
+  strokes.push(new StrokeData(null, 0, null, null, null, null, null));
+}
 
+function continuePainting(x: number, y: number): void {
+  if (targetLayer == null) {
+    return;
+  }
+  if (prevX === x && prevY === y) {
+    // 同じ地点の場合、何もしない。
+  } else {
+    drawLine(targetLayer, lineWidth, picker.getHexColor(), prevX, prevY, x, y);
+    strokes.push(new StrokeData(targetLayer, lineWidth, picker.getHexColor(), prevX, prevY, x, y));
+    lineCount++;
+  }
+  prevX = x;
+  prevY = y;
+}
+
+function endPainting(x?: number, y?: number): void {
+  if (targetLayer == null) {
+    return;
+  }
+  if (x != null && y != null) {
+    if (prevX === x && prevY === y) {
+      if (lineCount === 0) {
+        drawPoint(targetLayer, lineWidth, picker.getHexColor(), x, y);
+        strokes.push(new StrokeData(targetLayer, lineWidth, picker.getHexColor(), x, y, x, y));
+      }
+    } else {
+      drawLine(targetLayer, lineWidth, picker.getHexColor(), prevX, prevY, x, y);
+      strokes.push(new StrokeData(targetLayer, lineWidth, picker.getHexColor(), prevX, prevY, x, y));
+      lineCount++;
+    }
+  }
+  targetLayer = null;
+  prevX = null;
+  prevY = null;
+  saveStorage(LOCALSTORAGE_KEY_STROKES, strokes);
 }
 
 function getSelectedLayer(): HTMLCanvasElement {
