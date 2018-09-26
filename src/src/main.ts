@@ -73,10 +73,10 @@ $(function(){
 
   picker = new EightBitColorPicker({ el: 'ebcp', color: 0 });
   picker.addEventListener('colorChange', function(e: EightBitColorPickerEvent) {
-    console.log('Old Color: ' + e.detail.oldColor)
-    console.log('New Color: ' + e.detail.newColor)
-    console.log('8bit Color: ' + e.detail.picker.get8BitColor())
-    console.log('Hex Color: ' + e.detail.picker.getHexColor())
+    // console.log('Old Color: ' + e.detail.oldColor)
+    // console.log('New Color: ' + e.detail.newColor)
+    // console.log('8bit Color: ' + e.detail.picker.get8BitColor())
+    // console.log('Hex Color: ' + e.detail.picker.getHexColor())
     saveSettings();
     setTimeout(() => {
       e.detail.picker.hide();
@@ -247,14 +247,16 @@ $(function(){
 
   $('#pclyrs').on('touchstart', (e: any) => {
     e.preventDefault();
-    // console.log('touchstart', e);
-    startPainting(e.targetTouches[0].clientX, e.targetTouches[0].clientY);
+    // console.log('touchstart', e, $('#pclyrs').css('left'), $('#pclyrs').css('top'));
+    const pt = mapFromClient(e.target, e.targetTouches[0].clientX, e.targetTouches[0].clientY);
+    startPainting(pt.x, pt.y);
   });
 
   $('#pclyrs').on('touchmove', (e: any) => {
     e.preventDefault();
     // console.log('touchmove', e);
-    continuePainting(e.targetTouches[0].clientX, e.targetTouches[0].clientY);
+    const pt = mapFromClient(e.target, e.targetTouches[0].clientX, e.targetTouches[0].clientY);
+    continuePainting(pt.x, pt.y);
   });
 
   $('#pclyrs').on('touchend', (e: any) => {
@@ -365,6 +367,14 @@ function endPainting(x?: number, y?: number): void {
   saveStorage(LOCALSTORAGE_KEY_STROKES, strokes);
 }
 
+function mapFromClient(element: HTMLElement, x: number, y: number): Point {
+  if (element.offsetParent != null) {
+    return mapFromClient(<HTMLElement>element.offsetParent, x - element.offsetLeft, y - element.offsetTop);
+  } else {
+    return new Point(x, y);
+  }
+}
+
 function getSelectedLayer(): HTMLCanvasElement {
   return $('#' + $('input[name=pclyrs_s]:checked').val()).get(0);
 }
@@ -454,7 +464,7 @@ function saveStorage(key, val) {
 
 function loadStorage(key) {
   const obj = localStorage.getItem(key);
-  //console.log(obj);
+  // console.log(obj);
   return JSON.parse(obj);
 }
 
