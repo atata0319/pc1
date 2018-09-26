@@ -247,7 +247,8 @@ $(function(){
 
   $('#pclyrs').on('touchstart', (e: any) => {
     e.preventDefault();
-    // console.log('touchstart', e, $('#pclyrs').css('left'), $('#pclyrs').css('top'));
+    console.log('touchstart', e);
+    $('#info').html('筆圧: ' + e.targetTouches[0].force + "<br />radiusX: " + e.targetTouches[0].radiusX + "<br />radiusY: " + e.targetTouches[0].radiusY + "<br />radiusY: " + e.targetTouches[0].rotationAngle);
     const pt = mapFromClient(e.target, e.targetTouches[0].clientX, e.targetTouches[0].clientY);
     startPainting(pt.x, pt.y);
   });
@@ -255,6 +256,7 @@ $(function(){
   $('#pclyrs').on('touchmove', (e: any) => {
     e.preventDefault();
     // console.log('touchmove', e);
+    $('#info').html('筆圧: ' + e.targetTouches[0].force + "<br />傾きX: " + e.targetTouches[0].radiusX + "<br />傾きY: " + e.targetTouches[0].radiusY + "<br />軸回転: " + e.targetTouches[0].rotationAngle);
     const pt = mapFromClient(e.target, e.targetTouches[0].clientX, e.targetTouches[0].clientY);
     continuePainting(pt.x, pt.y);
   });
